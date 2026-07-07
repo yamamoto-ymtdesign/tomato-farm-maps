@@ -44,9 +44,9 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
     if (!p) return;
     if (isInsideHouse(geometry, p.x, p.y)) {
       const { row, side } = findNearestLine(geometry, p.x);
-      onMapTap({ kind: "bed", row, side, ns: Math.round(p.y * 10) / 10 });
+      onMapTap({ kind: "bed", row, side, ns: Math.round(p.y) });
     } else if (isInsideOffice(geometry, p.x, p.y)) {
-      onMapTap({ kind: "office", x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10 });
+      onMapTap({ kind: "office", x: Math.round(p.x), y: Math.round(p.y) });
     }
   }
 

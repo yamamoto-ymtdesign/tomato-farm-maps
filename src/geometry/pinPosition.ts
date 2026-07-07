@@ -13,13 +13,13 @@ export function locationToXY(geometry: GreenhouseGeometry, location: PinLocation
   return { x, y: location.ns };
 }
 
-/** 表示用のラベル: 「3列 表・北から12.3m」または「事務所」 */
+/** 表示用のラベル: 「3列 表・北から12m」または「事務所」 */
 export function formatPinLocation(location: PinLocation): string {
   if (location.kind === "office") {
     return "事務所";
   }
   const sideLabel = location.side === "omote" ? "表" : "裏";
-  return `${location.row}列 ${sideLabel}・北から${location.ns.toFixed(1)}m`;
+  return `${location.row}列 ${sideLabel}・北から${Math.round(location.ns)}m`;
 }
 
 /** 2つの位置が「ほぼ同じ場所」とみなせるか */
