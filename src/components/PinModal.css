@@ -1,0 +1,71 @@
+.pin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 100;
+}
+
+.pin-modal {
+  width: 100%;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 20px;
+  box-sizing: border-box;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+.pin-modal__title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.pin-modal__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.pin-modal__meta {
+  font-size: 0.8rem;
+  color: #777;
+  margin: 8px 0 0;
+}
+
+.pin-modal__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.pin-modal__button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #f2f2f2;
+  font-size: 0.95rem;
+}
+
+.pin-modal__button--primary {
+  background: #2e7d32;
+  color: #fff;
+  border-color: #2e7d32;
+}
+
+.pin-modal__button--primary:disabled {
+  background: #a5c9a7;
+  border-color: #a5c9a7;
+}
+
+.pin-modal__button--danger {
+  background: #fff;
+  color: #c0392b;
+  border-color: #c0392b;
+  margin-right: auto;
+}
