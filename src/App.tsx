@@ -1,60 +1,89 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildGreenhouseGeometry } from "./geometry/greenhouseConfig";
 import type { Pin, PinDraft } from "./types/pin";
+import type { PinCategory } from "./types/pinCategory";
 import { loadPins, savePins, exportPinsAsJson, parsePinsFromJson } from "./storage/pinStorage";
 import { GreenhouseMap } from "./components/GreenhouseMap";
-import { PinModal } from "./components/PinModal";
+import { NewPinModal } from "./components/NewPinModal";
+import { PinDetailModal } from "./components/PinDetailModal";
+import { PinListView } from "./components/PinListView";
+import { createId } from "./utils/id";
 import "./App.css";
 
-function createId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
+/** タップ位置がこの距離(m)以内にある既存ピンは「同じ場所」とみなし、新規ピンにせず追記対象にする */
+const SAME_LOCATION_THRESHOLD_M = 1.5;
+
+type ViewMode = "map" | "list";
 
 function App() {
   const geometry = useMemo(() => buildGreenhouseGeometry(), []);
   const [pins, setPins] = useState<Pin[]>(() => loadPins());
   const [draft, setDraft] = useState<PinDraft | null>(null);
-  const [editingPin, setEditingPin] = useState<Pin | null>(null);
+  const [editingPinId, setEditingPinId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("map");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     savePins(pins);
   }, [pins]);
 
-  function handleMapTap(next: PinDraft) {
-    setDraft(next);
+  const editingPin = pins.find((p) => p.id === editingPinId) ?? null;
+
+  function handleMapTap(tapped: PinDraft) {
+    const nearby = pins.find(
+      (p) =>
+        p.row === tapped.row &&
+        p.side === tapped.side &&
+        Math.abs(p.ns - tapped.ns) <= SAME_LOCATION_THRESHOLD_M,
+    );
+    if (nearby) {
+      setEditingPinId(nearby.id);
+    } else {
+      setDraft(tapped);
+    }
   }
 
-  function handleSaveNewPin(comment: string) {
+  function handleCreatePin(category: PinCategory, comment: string) {
     if (!draft) return;
-    const now = new Date().toISOString();
     const pin: Pin = {
       id: createId(),
       row: draft.row,
       side: draft.side,
       ns: draft.ns,
-      comment,
-      createdAt: now,
-      updatedAt: now,
+      entries: [{ id: createId(), category, comment, createdAt: new Date().toISOString() }],
     };
     setPins((prev) => [...prev, pin]);
     setDraft(null);
   }
 
-  function handleUpdatePin(comment: string) {
+  function handleAddEntry(category: PinCategory, comment: string) {
+    if (!editingPin) return;
+    const entry = { id: createId(), category, comment, createdAt: new Date().toISOString() };
+    setPins((prev) =>
+      prev.map((p) => (p.id === editingPin.id ? { ...p, entries: [...p.entries, entry] } : p)),
+    );
+  }
+
+  function handleEditEntry(entryId: string, category: PinCategory, comment: string) {
     if (!editingPin) return;
     setPins((prev) =>
       prev.map((p) =>
-        p.id === editingPin.id ? { ...p, comment, updatedAt: new Date().toISOString() } : p,
+        p.id === editingPin.id
+          ? { ...p, entries: p.entries.map((e) => (e.id === entryId ? { ...e, category, comment } : e)) }
+          : p,
       ),
     );
-    setEditingPin(null);
   }
 
-  function handleDeletePin() {
+  function handleDeleteEntry(entryId: string) {
     if (!editingPin) return;
-    setPins((prev) => prev.filter((p) => p.id !== editingPin.id));
-    setEditingPin(null);
+    const remaining = editingPin.entries.filter((e) => e.id !== entryId);
+    if (remaining.length === 0) {
+      setPins((prev) => prev.filter((p) => p.id !== editingPin.id));
+      setEditingPinId(null);
+    } else {
+      setPins((prev) => prev.map((p) => (p.id === editingPin.id ? { ...p, entries: remaining } : p)));
+    }
   }
 
   function handleExport() {
@@ -84,11 +113,16 @@ function App() {
     }
   }
 
+  const totalComments = pins.reduce((sum, p) => sum + p.entries.length, 0);
+
   return (
     <div className="app">
       <header className="app__header">
         <h1>ミニトマトハウス マップ</h1>
         <div className="app__header-actions">
+          <button type="button" onClick={() => setViewMode(viewMode === "map" ? "list" : "map")}>
+            {viewMode === "map" ? "一覧" : "地図"}
+          </button>
           <button type="button" onClick={handleImportClick}>
             読込
           </button>
@@ -106,31 +140,34 @@ function App() {
       </header>
 
       <main className="app__map">
-        <GreenhouseMap
-          geometry={geometry}
-          pins={pins}
-          draft={draft}
-          onMapTap={handleMapTap}
-          onPinTap={setEditingPin}
-        />
+        {viewMode === "map" ? (
+          <GreenhouseMap
+            geometry={geometry}
+            pins={pins}
+            draft={draft}
+            onMapTap={handleMapTap}
+            onPinTap={(pin) => setEditingPinId(pin.id)}
+          />
+        ) : (
+          <PinListView pins={pins} onSelectPin={(pin) => setEditingPinId(pin.id)} />
+        )}
       </main>
 
-      <p className="app__hint">ハウス内の気になる場所をタップするとピンを立てられます（ピン数: {pins.length}）</p>
-
-      {draft && (
-        <PinModal
-          target={draft}
-          onSave={handleSaveNewPin}
-          onClose={() => setDraft(null)}
-        />
+      {viewMode === "map" && (
+        <p className="app__hint">
+          ハウス内の気になる場所をタップするとピンを立てられます（ピン数: {pins.length} / コメント数: {totalComments}）
+        </p>
       )}
 
+      {draft && <NewPinModal target={draft} onSave={handleCreatePin} onClose={() => setDraft(null)} />}
+
       {editingPin && (
-        <PinModal
-          target={editingPin}
-          onSave={handleUpdatePin}
-          onDelete={handleDeletePin}
-          onClose={() => setEditingPin(null)}
+        <PinDetailModal
+          pin={editingPin}
+          onAddEntry={handleAddEntry}
+          onEditEntry={handleEditEntry}
+          onDeleteEntry={handleDeleteEntry}
+          onClose={() => setEditingPinId(null)}
         />
       )}
     </div>

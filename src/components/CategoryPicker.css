@@ -1,0 +1,24 @@
+.category-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-picker__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 2px solid #ccc;
+  background: transparent;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.category-picker__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}

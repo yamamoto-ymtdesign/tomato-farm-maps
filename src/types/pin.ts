@@ -1,4 +1,12 @@
 import type { Side } from "../geometry/greenhouseConfig";
+import type { PinCategory } from "./pinCategory";
+
+export interface PinEntry {
+  id: string;
+  category: PinCategory;
+  comment: string;
+  createdAt: string;
+}
 
 export interface Pin {
   id: string;
@@ -6,9 +14,7 @@ export interface Pin {
   side: Side;
   /** 北端からの距離(m)。ハウス内なら0〜80、事務所内ならnull */
   ns: number;
-  comment: string;
-  createdAt: string;
-  updatedAt: string;
+  entries: PinEntry[];
 }
 
 export interface PinDraft {

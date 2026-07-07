@@ -9,9 +9,9 @@ export interface RowLine {
   row: number;
   /** ベッドの中心X座標（m、西端からの距離） */
   xCenter: number;
-  /** 表側ラインのX座標 */
+  /** 表側(西側)ラインのX座標 = ベッド西端 */
   xOmote: number;
-  /** 裏側ラインのX座標 */
+  /** 裏側(東側)ラインのX座標 = ベッド東端 */
   xUra: number;
 }
 
@@ -33,6 +33,13 @@ export interface GreenhouseGeometry {
   houseLength: number;
   rowCount: number;
   channelY: number;
+  /** ベッドの北端Y座標(北端マージン分、外壁より内側) */
+  bedTop: number;
+  /** ベッドの南端Y座標(南端マージン分、外壁より内側) */
+  bedBottom: number;
+  bedWidth: number;
+  aisleWidth: number;
+  outerAisleWidth: number;
   office: OfficeRect;
   rows: RowLine[];
   posts: PostPosition[];
@@ -45,8 +52,12 @@ export interface GreenhouseConfig {
   houseLength: number;
   /** ベッドの列数 */
   rowCount: number;
-  /** 1列(ベッド)の幅に対する表裏ラインの間隔の割合 (0-1) */
-  bedLineSpanRatio: number;
+  /** 通路幅 / ベッド幅 の比率(列間の通路) */
+  aisleToBedWidthRatio: number;
+  /** 外壁側の通路幅 / 列間の通路幅 の比率(1列目表・12列目裏の外側通路) */
+  outerAisleToAisleRatio: number;
+  /** ベッド南北端から外壁までのマージン(m) */
+  bedEndMargin: number;
   /** 水路より北側の支柱本数 */
   postsNorth: number;
   /** 水路より南側の支柱本数 */
@@ -61,7 +72,9 @@ export const DEFAULT_GREENHOUSE_CONFIG: GreenhouseConfig = {
   houseWidth: 25,
   houseLength: 80,
   rowCount: 12,
-  bedLineSpanRatio: 0.65,
+  aisleToBedWidthRatio: 1,
+  outerAisleToAisleRatio: 3,
+  bedEndMargin: 2,
   postsNorth: 7,
   postsSouth: 8,
   office: {
@@ -70,7 +83,7 @@ export const DEFAULT_GREENHOUSE_CONFIG: GreenhouseConfig = {
   },
 };
 
-/** 等間隔にcount個の点を(0, span)の開区間に配置する */
+/** 等間隔にcount個の点を(offset, offset+span)の開区間に配置する */
 function evenlySpaced(span: number, count: number, offset = 0): number[] {
   return Array.from({ length: count }, (_, i) => offset + (span * (i + 1)) / (count + 1));
 }
@@ -78,27 +91,48 @@ function evenlySpaced(span: number, count: number, offset = 0): number[] {
 export function buildGreenhouseGeometry(
   config: GreenhouseConfig = DEFAULT_GREENHOUSE_CONFIG,
 ): GreenhouseGeometry {
-  const { houseWidth, houseLength, rowCount, bedLineSpanRatio, postsNorth, postsSouth, office } =
-    config;
+  const {
+    houseWidth,
+    houseLength,
+    rowCount,
+    aisleToBedWidthRatio,
+    outerAisleToAisleRatio,
+    bedEndMargin,
+    postsNorth,
+    postsSouth,
+    office,
+  } = config;
 
   const channelY = houseLength / 2;
-  const sliceWidth = houseWidth / rowCount;
-  const halfBedSpan = (sliceWidth * bedLineSpanRatio) / 2;
+
+  // houseWidth = 2*outerAisleWidth + rowCount*bedWidth + (rowCount-1)*aisleWidth を
+  // bedWidth について解く
+  const widthUnits =
+    2 * aisleToBedWidthRatio * outerAisleToAisleRatio + rowCount + (rowCount - 1) * aisleToBedWidthRatio;
+  const bedWidth = houseWidth / widthUnits;
+  const aisleWidth = bedWidth * aisleToBedWidthRatio;
+  const outerAisleWidth = aisleWidth * outerAisleToAisleRatio;
 
   const rows: RowLine[] = Array.from({ length: rowCount }, (_, i) => {
     const row = i + 1;
-    const xCenter = (row - 0.5) * sliceWidth;
+    const bedLeft = outerAisleWidth + i * (bedWidth + aisleWidth);
+    const bedRight = bedLeft + bedWidth;
     return {
       row,
-      xCenter,
-      xOmote: xCenter - halfBedSpan,
-      xUra: xCenter + halfBedSpan,
+      xCenter: (bedLeft + bedRight) / 2,
+      xOmote: bedLeft,
+      xUra: bedRight,
     };
   });
 
+  const bedTop = bedEndMargin;
+  const bedBottom = houseLength - bedEndMargin;
+
   const posts: PostPosition[] = [
-    ...evenlySpaced(channelY, postsNorth).map((y): PostPosition => ({ y, half: "north" })),
-    ...evenlySpaced(houseLength - channelY, postsSouth, channelY).map(
+    ...evenlySpaced(channelY - bedTop, postsNorth, bedTop).map(
+      (y): PostPosition => ({ y, half: "north" }),
+    ),
+    ...evenlySpaced(bedBottom - channelY, postsSouth, channelY).map(
       (y): PostPosition => ({ y, half: "south" }),
     ),
   ];
@@ -108,6 +142,11 @@ export function buildGreenhouseGeometry(
     houseLength,
     rowCount,
     channelY,
+    bedTop,
+    bedBottom,
+    bedWidth,
+    aisleWidth,
+    outerAisleWidth,
     office: {
       x: 0,
       y: houseLength,

@@ -1,0 +1,83 @@
+.pin-list-view {
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  background: #fafafa;
+}
+
+.pin-list-view__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pin-list-view__filter {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 2px solid #ccc;
+  background: transparent;
+  font-size: 0.85rem;
+}
+
+.pin-list-view__filter--active {
+  font-weight: bold;
+}
+
+.pin-list-view__empty {
+  color: #888;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.pin-list-view__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pin-list-view__item {
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.pin-list-view__item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pin-list-view__category {
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.pin-list-view__location {
+  font-size: 0.85rem;
+  color: #333;
+  font-weight: bold;
+}
+
+.pin-list-view__comment {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.pin-list-view__date {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #888;
+}

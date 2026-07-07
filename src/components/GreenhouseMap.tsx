@@ -4,6 +4,7 @@ import type { GreenhouseGeometry } from "../geometry/greenhouseConfig";
 import { findNearestLine } from "../geometry/greenhouseConfig";
 import type { Pin, PinDraft } from "../types/pin";
 import { pinToXY } from "../geometry/pinPosition";
+import { getPinColor } from "../types/pinHelpers";
 import "./GreenhouseMap.css";
 
 interface GreenhouseMapProps {
@@ -74,14 +75,14 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
               onClick={handleBackgroundClick}
             />
 
-            {/* 列(ベッド)の帯 */}
+            {/* 列(ベッド) */}
             {geometry.rows.map((line) => (
               <rect
                 key={`bed-${line.row}`}
                 x={line.xOmote}
-                y={0}
+                y={geometry.bedTop}
                 width={line.xUra - line.xOmote}
-                height={geometry.houseLength}
+                height={geometry.bedBottom - geometry.bedTop}
                 className="bed-band"
                 onClick={handleBackgroundClick}
               />
@@ -168,6 +169,7 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
                   cy={y}
                   r={0.6}
                   className="pin-marker"
+                  style={{ fill: getPinColor(pin) }}
                   onClick={(e) => {
                     e.stopPropagation();
                     onPinTap(pin);
