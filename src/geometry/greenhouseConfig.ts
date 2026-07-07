@@ -46,16 +46,16 @@ export interface GreenhouseGeometry {
 }
 
 export interface GreenhouseConfig {
-  /** メインハウス 横幅(東西, m) */
-  houseWidth: number;
   /** メインハウス 縦幅(南北, m) */
   houseLength: number;
   /** ベッドの列数 */
   rowCount: number;
-  /** 通路幅 / ベッド幅 の比率(列間の通路) */
-  aisleToBedWidthRatio: number;
-  /** 外壁側の通路幅 / 列間の通路幅 の比率(1列目表・12列目裏の外側通路) */
-  outerAisleToAisleRatio: number;
+  /** ベッド幅(m) */
+  bedWidth: number;
+  /** 列と列の間の通路幅(m) */
+  aisleWidth: number;
+  /** 外壁側の通路幅(m)。1列目表・12列目裏から外壁までの通路 */
+  outerAisleWidth: number;
   /** ベッド南北端から外壁までのマージン(m) */
   bedEndMargin: number;
   /** 水路より北側の支柱本数 */
@@ -68,12 +68,29 @@ export interface GreenhouseConfig {
   };
 }
 
+// 2026-07改修: ハウス幅を25m→40mへ拡張。ベッド幅・列間通路幅は25m時代の
+// 値を40/25倍に拡大する一方、外側通路(1列目表・12列目裏〜外壁)は逆に
+// 半分に縮小した。ハウス全幅はこれらの合計から導かれる(結果として約34.3m)。
+const PREVIOUS_HOUSE_WIDTH = 25;
+const PREVIOUS_ROW_COUNT = 12;
+const PREVIOUS_AISLE_TO_BED_RATIO = 1;
+const PREVIOUS_OUTER_TO_AISLE_RATIO = 3;
+const PREVIOUS_WIDTH_UNITS =
+  2 * PREVIOUS_AISLE_TO_BED_RATIO * PREVIOUS_OUTER_TO_AISLE_RATIO +
+  PREVIOUS_ROW_COUNT +
+  (PREVIOUS_ROW_COUNT - 1) * PREVIOUS_AISLE_TO_BED_RATIO;
+const PREVIOUS_BED_WIDTH = PREVIOUS_HOUSE_WIDTH / PREVIOUS_WIDTH_UNITS;
+const PREVIOUS_AISLE_WIDTH = PREVIOUS_BED_WIDTH * PREVIOUS_AISLE_TO_BED_RATIO;
+const PREVIOUS_OUTER_AISLE_WIDTH = PREVIOUS_AISLE_WIDTH * PREVIOUS_OUTER_TO_AISLE_RATIO;
+
+const WIDTH_SCALE = 40 / 25;
+
 export const DEFAULT_GREENHOUSE_CONFIG: GreenhouseConfig = {
-  houseWidth: 25,
   houseLength: 80,
   rowCount: 12,
-  aisleToBedWidthRatio: 1,
-  outerAisleToAisleRatio: 3,
+  bedWidth: PREVIOUS_BED_WIDTH * WIDTH_SCALE,
+  aisleWidth: PREVIOUS_AISLE_WIDTH * WIDTH_SCALE,
+  outerAisleWidth: PREVIOUS_OUTER_AISLE_WIDTH / 2,
   bedEndMargin: 2,
   postsNorth: 7,
   postsSouth: 8,
@@ -92,11 +109,11 @@ export function buildGreenhouseGeometry(
   config: GreenhouseConfig = DEFAULT_GREENHOUSE_CONFIG,
 ): GreenhouseGeometry {
   const {
-    houseWidth,
     houseLength,
     rowCount,
-    aisleToBedWidthRatio,
-    outerAisleToAisleRatio,
+    bedWidth,
+    aisleWidth,
+    outerAisleWidth,
     bedEndMargin,
     postsNorth,
     postsSouth,
@@ -104,14 +121,7 @@ export function buildGreenhouseGeometry(
   } = config;
 
   const channelY = houseLength / 2;
-
-  // houseWidth = 2*outerAisleWidth + rowCount*bedWidth + (rowCount-1)*aisleWidth を
-  // bedWidth について解く
-  const widthUnits =
-    2 * aisleToBedWidthRatio * outerAisleToAisleRatio + rowCount + (rowCount - 1) * aisleToBedWidthRatio;
-  const bedWidth = houseWidth / widthUnits;
-  const aisleWidth = bedWidth * aisleToBedWidthRatio;
-  const outerAisleWidth = aisleWidth * outerAisleToAisleRatio;
+  const houseWidth = 2 * outerAisleWidth + rowCount * bedWidth + (rowCount - 1) * aisleWidth;
 
   const rows: RowLine[] = Array.from({ length: rowCount }, (_, i) => {
     const row = i + 1;
@@ -171,4 +181,15 @@ export function findNearestLine(
     if (distUra < best.dist) best = { row: line.row, side: "ura", dist: distUra };
   }
   return { row: best.row, side: best.side };
+}
+
+/** 座標(x,y メートル)がハウス本体の内側かどうか */
+export function isInsideHouse(geometry: GreenhouseGeometry, x: number, y: number): boolean {
+  return x >= 0 && x <= geometry.houseWidth && y >= 0 && y <= geometry.houseLength;
+}
+
+/** 座標(x,y メートル)が事務所の内側かどうか */
+export function isInsideOffice(geometry: GreenhouseGeometry, x: number, y: number): boolean {
+  const { office } = geometry;
+  return x >= office.x && x <= office.x + office.width && y >= office.y && y <= office.y + office.height;
 }

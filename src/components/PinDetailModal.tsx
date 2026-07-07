@@ -105,7 +105,7 @@ export function PinDetailModal({
   return (
     <div className="pin-modal-overlay" onClick={onClose}>
       <div className="pin-modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="pin-modal__title">{formatPinLocation(pin)}</h2>
+        <h2 className="pin-modal__title">{formatPinLocation(pin.location)}</h2>
 
         {mode.type === "list" && (
           <>

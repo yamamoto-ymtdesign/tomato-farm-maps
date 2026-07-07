@@ -71,7 +71,7 @@ export function PinListView({ pins, onSelectPin }: PinListViewProps) {
                   <span className="pin-list-view__category" style={{ background: info.color }}>
                     {info.label}
                   </span>
-                  <span className="pin-list-view__location">{formatPinLocation(pin)}</span>
+                  <span className="pin-list-view__location">{formatPinLocation(pin.location)}</span>
                 </div>
                 <p className="pin-list-view__comment">{entry.comment}</p>
                 <span className="pin-list-view__date">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildGreenhouseGeometry } from "./geometry/greenhouseConfig";
+import { isSameLocation } from "./geometry/pinPosition";
 import type { Pin, PinDraft } from "./types/pin";
 import type { PinCategory } from "./types/pinCategory";
 import { loadPins, savePins, exportPinsAsJson, parsePinsFromJson } from "./storage/pinStorage";
@@ -9,9 +10,6 @@ import { PinDetailModal } from "./components/PinDetailModal";
 import { PinListView } from "./components/PinListView";
 import { createId } from "./utils/id";
 import "./App.css";
-
-/** タップ位置がこの距離(m)以内にある既存ピンは「同じ場所」とみなし、新規ピンにせず追記対象にする */
-const SAME_LOCATION_THRESHOLD_M = 1.5;
 
 type ViewMode = "map" | "list";
 
@@ -30,12 +28,7 @@ function App() {
   const editingPin = pins.find((p) => p.id === editingPinId) ?? null;
 
   function handleMapTap(tapped: PinDraft) {
-    const nearby = pins.find(
-      (p) =>
-        p.row === tapped.row &&
-        p.side === tapped.side &&
-        Math.abs(p.ns - tapped.ns) <= SAME_LOCATION_THRESHOLD_M,
-    );
+    const nearby = pins.find((p) => isSameLocation(p.location, tapped));
     if (nearby) {
       setEditingPinId(nearby.id);
     } else {
@@ -47,9 +40,7 @@ function App() {
     if (!draft) return;
     const pin: Pin = {
       id: createId(),
-      row: draft.row,
-      side: draft.side,
-      ns: draft.ns,
+      location: draft,
       entries: [{ id: createId(), category, comment, createdAt: new Date().toISOString() }],
     };
     setPins((prev) => [...prev, pin]);
@@ -155,7 +146,8 @@ function App() {
 
       {viewMode === "map" && (
         <p className="app__hint">
-          ハウス内の気になる場所をタップするとピンを立てられます（ピン数: {pins.length} / コメント数: {totalComments}）
+          ハウスや事務所の気になる場所をタップするとピンを立てられます（ピン数: {pins.length} / コメント数:{" "}
+          {totalComments}）
         </p>
       )}
 

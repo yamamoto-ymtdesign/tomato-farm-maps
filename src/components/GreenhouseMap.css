@@ -25,16 +25,16 @@
 }
 
 .bed-band {
-  fill: #1a1a1a;
-  stroke: #000000;
+  fill: #2f6d3a;
+  stroke: #1f4d27;
   stroke-width: 0.05;
   cursor: pointer;
 }
 
 .post-bar {
-  stroke: #d9d9d9;
+  stroke: #e8f2e8;
   stroke-width: 0.12;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .water-channel {
@@ -47,6 +47,7 @@
   fill: #f6e9c9;
   stroke: #b98f3d;
   stroke-width: 0.15;
+  cursor: pointer;
 }
 
 .entrance-marker {
@@ -69,12 +70,6 @@
 
 .label--row {
   font-size: 1.2px;
-}
-
-.label--zone {
-  font-size: 1.8px;
-  font-weight: bold;
-  fill: #3f7fbf;
 }
 
 .label--channel {

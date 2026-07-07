@@ -1,6 +1,10 @@
 import type { Side } from "../geometry/greenhouseConfig";
 import type { PinCategory } from "./pinCategory";
 
+export type PinLocation =
+  | { kind: "bed"; row: number; side: Side; ns: number }
+  | { kind: "office"; x: number; y: number };
+
 export interface PinEntry {
   id: string;
   category: PinCategory;
@@ -10,15 +14,9 @@ export interface PinEntry {
 
 export interface Pin {
   id: string;
-  row: number;
-  side: Side;
-  /** 北端からの距離(m)。ハウス内なら0〜80、事務所内ならnull */
-  ns: number;
+  location: PinLocation;
   entries: PinEntry[];
 }
 
-export interface PinDraft {
-  row: number;
-  side: Side;
-  ns: number;
-}
+/** 保存前の位置情報。実体はPinLocationそのもの */
+export type PinDraft = PinLocation;

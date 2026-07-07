@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import type { GreenhouseGeometry } from "../geometry/greenhouseConfig";
-import { findNearestLine } from "../geometry/greenhouseConfig";
+import { findNearestLine, isInsideHouse, isInsideOffice } from "../geometry/greenhouseConfig";
 import type { Pin, PinDraft } from "../types/pin";
-import { pinToXY } from "../geometry/pinPosition";
+import { locationToXY } from "../geometry/pinPosition";
 import { getPinColor } from "../types/pinHelpers";
 import "./GreenhouseMap.css";
 
@@ -42,11 +42,12 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
   function handleBackgroundClick(e: React.MouseEvent) {
     const p = clientToMeters(e.clientX, e.clientY);
     if (!p) return;
-    if (p.x < 0 || p.x > geometry.houseWidth || p.y < 0 || p.y > geometry.houseLength) {
-      return;
+    if (isInsideHouse(geometry, p.x, p.y)) {
+      const { row, side } = findNearestLine(geometry, p.x);
+      onMapTap({ kind: "bed", row, side, ns: Math.round(p.y * 10) / 10 });
+    } else if (isInsideOffice(geometry, p.x, p.y)) {
+      onMapTap({ kind: "office", x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10 });
     }
-    const { row, side } = findNearestLine(geometry, p.x);
-    onMapTap({ row, side, ns: Math.round(p.y * 10) / 10 });
   }
 
   return (
@@ -117,12 +118,6 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
               y2={geometry.channelY}
               className="water-channel"
             />
-            <text x={-2.5} y={geometry.channelY - 1.5} className="label label--zone">
-              北
-            </text>
-            <text x={-2.5} y={geometry.channelY + 3} className="label label--zone">
-              南
-            </text>
             <text x={geometry.houseWidth / 2} y={geometry.channelY - 0.8} className="label label--channel">
               水路
             </text>
@@ -134,6 +129,7 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
               width={geometry.office.width}
               height={geometry.office.height}
               className="office-outline"
+              onClick={handleBackgroundClick}
             />
             <text
               x={geometry.office.x + geometry.office.width / 2}
@@ -161,7 +157,7 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
 
             {/* 既存ピン */}
             {pins.map((pin) => {
-              const { x, y } = pinToXY(geometry, pin);
+              const { x, y } = locationToXY(geometry, pin.location);
               return (
                 <circle
                   key={pin.id}
@@ -181,8 +177,8 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
             {/* 選択中(未保存)のドラフトピン */}
             {draft && (
               <circle
-                cx={pinToXY(geometry, draft).x}
-                cy={pinToXY(geometry, draft).y}
+                cx={locationToXY(geometry, draft).x}
+                cy={locationToXY(geometry, draft).y}
                 r={0.7}
                 className="pin-marker pin-marker--draft"
               />
