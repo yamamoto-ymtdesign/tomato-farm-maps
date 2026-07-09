@@ -140,8 +140,8 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
             </text>
             {/* 事務所→ハウス入口(北面) */}
             <line
-              x1={geometry.office.x + geometry.office.width * 0.2}
-              x2={geometry.office.x + geometry.office.width * 0.8}
+              x1={geometry.officeEntrance.x0}
+              x2={geometry.officeEntrance.x1}
               y1={geometry.office.y}
               y2={geometry.office.y}
               className="entrance-marker"
@@ -160,20 +160,31 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
               if (pin.location.kind === "row") {
                 const line = geometry.rows[pin.location.row - 1];
                 const { y0, y1 } = rowExtentRange(geometry, pin.location.extent);
+                const color = getPinColor(pin);
+                const handleTap = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  onPinTap(pin);
+                };
                 return (
-                  <line
-                    key={pin.id}
-                    x1={line.xCenter}
-                    x2={line.xCenter}
-                    y1={y0}
-                    y2={y1}
-                    className="pin-marker pin-marker--row"
-                    style={{ stroke: getPinColor(pin) }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPinTap(pin);
-                    }}
-                  />
+                  <g key={pin.id}>
+                    <line
+                      x1={line.xCenter}
+                      x2={line.xCenter}
+                      y1={y0}
+                      y2={y1}
+                      className="pin-marker pin-marker--row"
+                      style={{ stroke: color }}
+                      onClick={handleTap}
+                    />
+                    <circle
+                      cx={line.xCenter}
+                      cy={(y0 + y1) / 2}
+                      r={0.6}
+                      className="pin-marker"
+                      style={{ fill: color }}
+                      onClick={handleTap}
+                    />
+                  </g>
                 );
               }
               const { x, y } = locationToXY(geometry, pin.location);

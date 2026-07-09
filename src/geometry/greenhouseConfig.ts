@@ -41,6 +41,8 @@ export interface GreenhouseGeometry {
   aisleWidth: number;
   outerAisleWidth: number;
   office: OfficeRect;
+  /** 事務所→ハウスの入口(北面)のX座標範囲 */
+  officeEntrance: { x0: number; x1: number };
   rows: RowLine[];
   posts: PostPosition[];
 }
@@ -63,7 +65,10 @@ export interface GreenhouseConfig {
   /** 水路より南側の支柱本数 */
   postsSouth: number;
   office: {
-    width: number;
+    /** 事務所の東端をこの列のura(東端)ラインに揃える */
+    extendsToRow: number;
+    /** ハウスへの入口(北面)をこの2列の間に置く */
+    entranceBetweenRows: [number, number];
     height: number;
   };
 }
@@ -95,7 +100,8 @@ export const DEFAULT_GREENHOUSE_CONFIG: GreenhouseConfig = {
   postsNorth: 7,
   postsSouth: 7,
   office: {
-    width: 10,
+    extendsToRow: 5,
+    entranceBetweenRows: [4, 5],
     height: 5,
   },
 };
@@ -147,6 +153,13 @@ export function buildGreenhouseGeometry(
     ),
   ];
 
+  const officeWidth = rows[office.extendsToRow - 1].xUra;
+  const [entranceRowA, entranceRowB] = office.entranceBetweenRows;
+  const officeEntrance = {
+    x0: rows[entranceRowA - 1].xUra,
+    x1: rows[entranceRowB - 1].xOmote,
+  };
+
   return {
     houseWidth,
     houseLength,
@@ -160,9 +173,10 @@ export function buildGreenhouseGeometry(
     office: {
       x: 0,
       y: houseLength,
-      width: office.width,
+      width: officeWidth,
       height: office.height,
     },
+    officeEntrance,
     rows,
     posts,
   };
