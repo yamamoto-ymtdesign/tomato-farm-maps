@@ -29,6 +29,28 @@
   color: #555;
 }
 
+.scope-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.scope-picker__option {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 2px solid #ccc;
+  background: transparent;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.scope-picker__option--selected {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+}
+
 .pin-modal__textarea {
   width: 100%;
   box-sizing: border-box;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildGreenhouseGeometry } from "./geometry/greenhouseConfig";
 import { isSameLocation } from "./geometry/pinPosition";
-import type { Pin, PinDraft } from "./types/pin";
+import type { Pin, PinDraft, PinLocation } from "./types/pin";
 import type { PinCategory } from "./types/pinCategory";
 import { loadPins, savePins, exportPinsAsJson, parsePinsFromJson } from "./storage/pinStorage";
 import { GreenhouseMap } from "./components/GreenhouseMap";
@@ -36,11 +36,10 @@ function App() {
     }
   }
 
-  function handleCreatePin(category: PinCategory, comment: string) {
-    if (!draft) return;
+  function handleCreatePin(location: PinLocation, category: PinCategory, comment: string) {
     const pin: Pin = {
       id: createId(),
-      location: draft,
+      location,
       entries: [{ id: createId(), category, comment, createdAt: new Date().toISOString() }],
     };
     setPins((prev) => [...prev, pin]);

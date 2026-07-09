@@ -93,7 +93,7 @@ export const DEFAULT_GREENHOUSE_CONFIG: GreenhouseConfig = {
   outerAisleWidth: PREVIOUS_OUTER_AISLE_WIDTH / 2,
   bedEndMargin: 2,
   postsNorth: 7,
-  postsSouth: 8,
+  postsSouth: 7,
   office: {
     width: 10,
     height: 5,

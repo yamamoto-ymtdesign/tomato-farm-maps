@@ -93,3 +93,10 @@
   stroke: #ffffff;
   stroke-dasharray: 0.2 0.1;
 }
+
+.pin-marker--row {
+  stroke-width: 0.6;
+  stroke-linecap: round;
+  opacity: 0.85;
+  cursor: pointer;
+}

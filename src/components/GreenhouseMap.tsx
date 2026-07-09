@@ -3,7 +3,7 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import type { GreenhouseGeometry } from "../geometry/greenhouseConfig";
 import { findNearestLine, isInsideHouse, isInsideOffice } from "../geometry/greenhouseConfig";
 import type { Pin, PinDraft } from "../types/pin";
-import { locationToXY } from "../geometry/pinPosition";
+import { locationToXY, rowExtentRange } from "../geometry/pinPosition";
 import { getPinColor } from "../types/pinHelpers";
 import "./GreenhouseMap.css";
 
@@ -157,6 +157,25 @@ export function GreenhouseMap({ geometry, pins, draft, onMapTap, onPinTap }: Gre
 
             {/* 既存ピン */}
             {pins.map((pin) => {
+              if (pin.location.kind === "row") {
+                const line = geometry.rows[pin.location.row - 1];
+                const { y0, y1 } = rowExtentRange(geometry, pin.location.extent);
+                return (
+                  <line
+                    key={pin.id}
+                    x1={line.xCenter}
+                    x2={line.xCenter}
+                    y1={y0}
+                    y2={y1}
+                    className="pin-marker pin-marker--row"
+                    style={{ stroke: getPinColor(pin) }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPinTap(pin);
+                    }}
+                  />
+                );
+              }
               const { x, y } = locationToXY(geometry, pin.location);
               return (
                 <circle
